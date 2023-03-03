@@ -71,12 +71,9 @@ void QSerialPort::newDataArrived(char *bytesA, int lengthA)
 {
     int bytesToReadL = lengthA;
 
-    // Always buffered, read data from the port into the read buffer
     if (readBufferMaxSize && (bytesToReadL > (readBufferMaxSize - readBuffer.size()))) {
         bytesToReadL = readBufferMaxSize - readBuffer.size();
         if (bytesToReadL <= 0) {
-            // Buffer is full. User must read data from the buffer
-            // before we can read more from the port.
             stopReadThread();
             return;
         }
@@ -202,11 +199,12 @@ bool QSerialPort::open(QIODeviceBase::OpenMode mode)
     }
     else
     {
+        isConnected = true;
         if (!setParameters())
         {
+            isConnected = false;
             return false;
         }
-        isConnected = true;
         return true;
     }
 }
@@ -272,7 +270,7 @@ bool QSerialPort::setParameters()
         QJniObject java_portName = QJniObject::fromString(m_portName);
 
         jboolean resultL = QJniObject::callStaticMethod<jboolean>(UsbSerial_jniClassName,
-                                           "printFromJava",
+                                           "setParameters",
                                            "(Ljava/lang/String;IIII)Z",
                                             java_portName.object<jstring>(),
                                                m_baudRate,
